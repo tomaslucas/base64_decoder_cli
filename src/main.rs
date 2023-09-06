@@ -1,51 +1,60 @@
-extern crate clap;
-use clap::{App, Arg};
+use base64::{engine::general_purpose, Engine as _};
+use clap::Parser;
+
+/// Simple program to greet a person
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+//let m = command!().get_matches();
+/// Simple programa
+struct Args {
+    /// Input base64 file to decode
+    #[arg(
+        short,
+        long,
+        value_name("ARCHIVO"),
+        required(true),
+        help("Archivo en base64 para decodificar")
+    )]
+    input: String,
+
+    /// Word to extract
+    #[arg(
+        short,
+        long,
+        value_name("PALABRA"),
+        help("Palabra a extraer de la salida decodificada"),
+        default_value_t = String::from("PRO"),
+    )]
+    word: String,
+}
 
 fn main() {
-    // Definir la interfaz de línea de comandos usando clap
-    let matches = App::new("Base64 Decoder CLI")
-        .version("1.0")
-        .author("Tu Nombre")
-        .about("Decodifica una cadena en base64 desde un archivo y extrae una palabra específica")
-        .arg(
-            Arg::with_name("input")
-                .short("i")
-                .long("input")
-                .value_name("ARCHIVO")
-                .required(true)
-                .help("Archivo en base64 para decodificar"),
-        )
-        .arg(
-            Arg::with_name("word")
-                .short("w")
-                .long("word")
-                .value_name("PALABRA")
-                .help("Palabra a extraer de la salida decodificada")
-                .takes_value(true),
-        )
-        .get_matches();
-
+    //let m = command!().get_matches();
+    let args = Args::parse();
     // Leer el nombre del archivo de entrada desde los argumentos
-    let input_file = matches.value_of("input").unwrap();
-
+    let input_file = &args.input;
     // Leer el contenido del archivo en base64
     let base64_content = std::fs::read_to_string(input_file).unwrap();
-
     // Decodificar el contenido en base64
-    let decoded_content = base64::decode(&base64_content).unwrap();
-
+    let decoded_content = general_purpose::STANDARD.decode(base64_content).unwrap();
     // Convertir el contenido decodificado en una cadena UTF-8
     let utf8_content = String::from_utf8_lossy(&decoded_content);
-
     // Imprimir la salida decodificada
     println!("Contenido decodificado:\n{}", utf8_content);
 
     // Si se proporcionó el argumento 'word', extraer la palabra específica
-    if let Some(word) = matches.value_of("word") {
+    if !args.word.is_empty() {
         let extracted_word = utf8_content
             .split_whitespace()
-            .find(|&w| w == word)
-            .unwrap_or("La palabra no fue encontrada");
-        println!("Palabra extraída: {}", extracted_word);
+            .find(|&w| w == args.word)
+            .unwrap_or("KO");
+        if extracted_word == "KO" {
+            println!(
+                "La palabra: {} -> NO se encuentra en el fichero.",
+                &args.word
+            );
+        } else {
+            println!("La palabra: {} -> existe en el fichero.", &args.word);
+        }
     }
 }
