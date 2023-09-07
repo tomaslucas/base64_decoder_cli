@@ -1,4 +1,5 @@
-use base64::{engine::general_purpose, Engine as _};
+use base64_decoder_cli::decode_base64::decode_base64;
+use base64_decoder_cli::read_file::read_file;
 use clap::Parser;
 
 /// Simple program to greet a person
@@ -33,13 +34,9 @@ fn main() {
     let args = Args::parse();
     // Leer el nombre del archivo de entrada desde los argumentos
     let input_file = &args.input;
-    // Leer el contenido del archivo en base64
-    let base64_content = std::fs::read_to_string(input_file).unwrap();
-    // Decodificar el contenido en base64
-    let decoded_content = general_purpose::STANDARD.decode(base64_content).unwrap();
-    // Convertir el contenido decodificado en una cadena UTF-8
-    let utf8_content = String::from_utf8_lossy(&decoded_content);
-    // Imprimir la salida decodificada
+    let base64_content = read_file(input_file);
+    let utf8_content = decode_base64(&base64_content);
+    // // Imprimir la salida decodificada
     println!("Contenido decodificado:\n{}", utf8_content);
 
     // Si se proporcionó el argumento 'word', extraer la palabra específica
